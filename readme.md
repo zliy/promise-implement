@@ -1,0 +1,3 @@
+# 一个简单的Promise实现
+
+目前可以正确实现Promise的then方法，包括链式的then和then里的onSucc里返回新的Promise对象
