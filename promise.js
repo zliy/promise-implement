@@ -36,14 +36,14 @@ class MyPromise {
         return new MyPromise((res, rej) => {
             let runHandler = () => {
                 let succOrFail = this._status === 'resolved' ? onSucc : onFail
-                setTimeout(() => { // todo: 用类似nextTick替换setTimeout
+                MyPromise._nextTick(() => {
                     try {
                         let thenReturn = succOrFail(this._value)
                         res(thenReturn) // then返回的新promise的resolve
                     } catch (e) {
                         rej(e)
                     }
-                }, 0)
+                })
             }
             if (this._status !== 'pending') {
                 runHandler()
@@ -86,6 +86,22 @@ class MyPromise {
             }
         })
     }
+
+    static _nextTick(fn) {
+        if (typeof process === 'object' && process.nextTick) {
+            process.nextTick(fn)
+        } else if (MutationObserver && document && document.createTextNode) {
+            let observer = new MutationObserver(fn)
+            let textNode = document.createTextNode('-')
+            observer.observe(textNode, {
+                characterData: true
+            })
+            textNode.data = ''
+        } else {
+            setTimeout(fn)
+        }
+    }
+
 }
 
 
