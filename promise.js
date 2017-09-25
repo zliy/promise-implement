@@ -3,7 +3,7 @@ class MyPromise {
         let resolve = this._resolveOrReject.bind(this, 'resolved')
         let reject = this._resolveOrReject.bind(this, 'rejected')
         this._status = 'pending'
-
+        this._handerAtPending = []
         try {
             executor(resolve, reject)
         } catch (e) {
@@ -27,12 +27,12 @@ class MyPromise {
         }
         this._value = val
         this._status = which
-        this._thenHandler && this._thenHandler()
+        for (let i = this._handerAtPending.length; i > 0; i--) {
+            this._handerAtPending.shift()()
+        }
     }
 
-    then(onSucc, onFail = it => {
-        throw it
-    }) {
+    then(onSucc, onFail = it => { throw it }) {
         return new MyPromise((res, rej) => {
             let runHandler = () => {
                 let succOrFail = this._status === 'resolved' ? onSucc : onFail
@@ -43,22 +43,22 @@ class MyPromise {
                     } catch (e) {
                         rej(e)
                     }
-                }, 0);
+                }, 0)
             }
             if (this._status !== 'pending') {
                 runHandler()
             } else {
-                this._thenHandler = runHandler
+                this._handerAtPending.push(runHandler)
             }
         })
     }
 
     static resolve(val) {
-        return val instanceof MyPromise ? val : new Promise(res => res(val))
+        return val instanceof MyPromise ? val : new MyPromise(res => res(val))
     }
 
     static reject(val) {
-        return new Promise((res, rej) => rej(val))
+        return new MyPromise((res, rej) => rej(val))
     }
 
     static all(pomsAry) {
